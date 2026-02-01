@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String?
+  firstName String?
+  lastName  String?
+  avatar    String?
+  googleId  String?  @unique
+  role      Role
+  orders    Order[]
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id         String      @id @default(uuid())
+  user       User        @relation(fields: [userId], references: [id])
+  userId     String
+  totalPrice Float
+  status     OrderStatus
+  createdAt  DateTime    @default(now())
+  items      OrderItem[]
+}
+
+model OrderItem {
+  id              String  @id @default(uuid())
+  order           Order   @relation(fields: [orderId], references: [id])
+  orderId         String
+  product         Product @relation(fields: [productId], references: [id])
+  productId       String
+  quantity        Int
+  priceAtPurchase Float
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  sku         String      @unique
+  name        String
+  description String?
+  price       Float
+  isActive    Boolean     @default(true)
+  imageUrl    String?
+  category    Category    @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  inventory   Inventory?
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+}
+
+model Inventory {
+  id            String    @id @default(uuid())
+  product       Product   @relation(fields: [productId], references: [id])
+  productId     String    @unique
+  sku           String
+  stockLevel    Int
+  stockReserved Int
+  lastRestock   DateTime?
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  products    Product[]
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+  SELLER
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
